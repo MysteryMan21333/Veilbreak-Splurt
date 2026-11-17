@@ -11936,5 +11936,15 @@
 #include "modular_zzveilbreak\modules\medical\items\medical_crossbow.dm"
 #include "modular_zzveilbreak\modules\mob\mob.dm"
 #include "modular_zzveilbreak\modules\spells\expanding_fire_ring.dm"
+// Veilbreak Implement Start - Holosynth species
+#include "modular_zzveilbreak\modules\species\holosynth\code\holosynth_defines.dm"
+#include "modular_zzveilbreak\modules\species\holosynth\code\holosynth_blood_type.dm"
+#include "modular_zzveilbreak\modules\species\holosynth\code\holopassthrough.dm"
+#include "modular_zzveilbreak\modules\species\holosynth\code\holosynth_effects.dm"
+#include "modular_zzveilbreak\modules\species\holosynth\code\holosynth.dm"
+#include "modular_zzveilbreak\modules\species\holosynth\code\holosynth_projector.dm"
+#include "modular_zzveilbreak\modules\species\holosynth\code\holosynth_quirks.dm"
+#include "modular_zzveilbreak\modules\sprite_accessories\citadel_hair_mia.dm"
+// Veilbreak Implement End
 #include "modular_zzveilbreak\modules\taur_mechanics\taur_body_overrides.dm"
 // END_INCLUDE

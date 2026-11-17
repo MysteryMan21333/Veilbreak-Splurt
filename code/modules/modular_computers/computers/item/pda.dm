@@ -59,6 +59,9 @@
 		/obj/item/flashlight/pen,
 		/obj/item/reagent_containers/hypospray/medipen,
 		/obj/item/cigarette,
+		// Veilbreak Implement Start
+		/obj/item/holosynth_pen,
+		// Veilbreak Implement End
 	)
 
 /obj/item/modular_computer/pda/Initialize(mapload)
