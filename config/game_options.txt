@@ -432,6 +432,9 @@ ROUNDSTART_RACES serpentid
 ## SPLURT BANDWAGON DOWN HERE
 ROUNDSTART_RACES arachnid
 
+## VEILBREAK RACES DOWN HERE
+ROUNDSTART_RACES holosynth
+
 ##-------------------------------------------------------------------------------------------
 
 ## Roundstart no-reset races
