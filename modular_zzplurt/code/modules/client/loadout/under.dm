@@ -254,3 +254,9 @@
 /datum/loadout_item/uniform/cin_surplus/marine
 	name = "CIN Combat Uniform (Marine)"
 	item_path = /obj/item/clothing/under/syndicate/rus_army/cin_surplus/marine
+
+// Veilbreak Edit Start
+/datum/loadout_item/uniform/jabroni
+	name = "Jabroni Outfit"
+	item_path = /obj/item/clothing/under/costume/jabroni
+// Veilbreak Edit End
