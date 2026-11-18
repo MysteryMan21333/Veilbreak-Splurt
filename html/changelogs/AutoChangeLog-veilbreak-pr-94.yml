@@ -1,0 +1,8 @@
+author: "MysteryMan21333"
+delete-after: True
+changes:
+  - qol: "Allows players to spawn with a bottle of pills to help with anxiety."
+  - qol: "Radios/Comms, no longer mess with the quirk."
+  - qol: "If you have Well-Trained and Social Anxiety on one character, their now effected with whispering."
+  - balance: "Rebalances the Social Anxiety perk to no longer be a problem in larger crowds."
+  - bugfix: "Fixs the issue requested by discord where players had to hide in a locker to calm down."
