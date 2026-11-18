@@ -31,6 +31,15 @@
 	)
 	fishing_difficulty = FISHING_EASY_DIFFICULTY + 10
 
+// Veilbreak Edit Start
+/datum/fish_source/toilet/reason_we_cant_fish(obj/item/fishing_rod/rod, mob/fisherman, atom/parent)
+	if(istype(parent, /obj/structure/toilet))
+		var/obj/structure/toilet/toilet = parent
+		if(!toilet.reagents?.total_volume)
+			return "There's no water in [parent] to fish in."
+	return ..()
+// Veilbreak Edit End
+
 /datum/fish_source/holographic
 	catalog_description = "Holographic water"
 	fish_table = list(

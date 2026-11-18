@@ -39,8 +39,7 @@
 	if(!isnull(has_water_reclaimer))
 		src.has_water_reclaimer = has_water_reclaimer
 	update_appearance(UPDATE_ICON)
-	if(mapload && SSmapping.level_trait(z, ZTRAIT_STATION))
-		AddComponent(/datum/component/fishing_spot, GLOB.preset_fish_sources[/datum/fish_source/toilet])
+	AddComponent(/datum/component/fishing_spot, GLOB.preset_fish_sources[/datum/fish_source/toilet])
 	AddElement(/datum/element/fish_safe_storage)
 	register_context()
 	create_reagents(reagent_capacity)
@@ -400,6 +399,14 @@
 	material_flags = MATERIAL_EFFECTS | MATERIAL_ADD_PREFIX | MATERIAL_COLOR | MATERIAL_AFFECT_STATISTICS
 	custom_materials = null
 	has_water_reclaimer = FALSE
+
+// Veilbreak Edit Start
+/obj/structure/toilet/greyscale/Initialize(mapload)
+	. = ..()
+	// Crafted toilets start with a full bowl so they can be fished in right away,
+	// but without a water reclaimer they won't refill on their own.
+	reagents.add_reagent(reagent_id, reagent_capacity)
+// Veilbreak Edit End
 
 /obj/structure/toilet/secret
 	var/secret_type = null
