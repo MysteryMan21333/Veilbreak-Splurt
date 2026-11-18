@@ -38,6 +38,7 @@
 		/obj/item/disk/nifsoft_uploader/nif_hide_backpack_disk = STOCK_NIFSOFT,
 		/obj/item/disk/nifsoft_uploader/dorms/nif_gfluid_disk = STOCK_NIFSOFT,
 		/obj/item/skillchip/mk2pet = 2,
+		/obj/item/custom_tattoo_kit = 2, //Veilbreak Edit
 	)
 
 #undef STOCK_NIFSOFT
