@@ -65,6 +65,7 @@ type Data = {
   // Banned users is a list of bank account datum IDs
   banned_users: number[];
   ID_required: BooleanLike;
+  beeps?: BooleanLike;
 };
 
 const actionToColor = {
@@ -76,7 +77,7 @@ const actionToColor = {
 
 export const OreSilo = (props: Data) => {
   const { act, data } = useBackend<Data>();
-  const { SHEET_MATERIAL_AMOUNT = 0, machines = [], logs = [] } = data || {};
+  const { SHEET_MATERIAL_AMOUNT = 0, machines = [], logs = [], beeps } = data || {};
 
   const [currentTab, setCurrentTab] = useState<Tab>(Tab.Logs);
 
@@ -85,22 +86,37 @@ export const OreSilo = (props: Data) => {
       <Window.Content className="OreSilo">
         <Stack vertical fill>
           <Stack.Item>
-            <Tabs fluid>
-              <Tabs.Tab
-                icon="plug"
-                selected={currentTab === Tab.Machines}
-                onClick={() => setCurrentTab(Tab.Machines)}
-              >
-                Connections
-              </Tabs.Tab>
-              <Tabs.Tab
-                icon="book-bookmark"
-                selected={currentTab === Tab.Logs}
-                onClick={() => setCurrentTab(Tab.Logs)}
-              >
-                Logs
-              </Tabs.Tab>
-            </Tabs>
+            <Stack align="center">
+              <Stack.Item grow>
+                <Tabs fluid>
+                  <Tabs.Tab
+                    icon="plug"
+                    selected={currentTab === Tab.Machines}
+                    onClick={() => setCurrentTab(Tab.Machines)}
+                  >
+                    Connections
+                  </Tabs.Tab>
+                  <Tabs.Tab
+                    icon="book-bookmark"
+                    selected={currentTab === Tab.Logs}
+                    onClick={() => setCurrentTab(Tab.Logs)}
+                  >
+                    Logs
+                  </Tabs.Tab>
+                </Tabs>
+              </Stack.Item>
+              {beeps !== undefined && (
+                <Stack.Item>
+                  <Button
+                    icon={beeps ? 'bell' : 'bell-slash'}
+                    color={beeps ? 'good' : 'bad'}
+                    onClick={() => act('toggle_beep')}
+                  >
+                    {beeps ? 'Mute beep' : 'Enable beep'}
+                  </Button>
+                </Stack.Item>
+              )}
+            </Stack>
           </Stack.Item>
           <Stack.Item grow>
             {currentTab === Tab.Machines ? (

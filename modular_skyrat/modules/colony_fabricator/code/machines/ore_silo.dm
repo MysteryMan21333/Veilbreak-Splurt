@@ -6,6 +6,8 @@
 	circuit = null
 	/// What this packs into
 	var/packed_type = /obj/item/flatpacked_machine/ore_silo
+	/// Whether the silo beeps when it logs a material action
+	var/beeps = TRUE
 
 /obj/machinery/ore_silo/colony_lathe/Initialize(mapload)
 	. = ..()
@@ -13,7 +15,26 @@
 
 /obj/machinery/ore_silo/colony_lathe/silo_log(obj/machinery/machinery_in_question, action, amount, noun, list/mats)
 	. = ..()
-	playsound(src, 'sound/machines/beep/beep.ogg', 30, TRUE)
+	if(beeps)
+		playsound(src, 'sound/machines/beep/beep.ogg', 30, TRUE)
+
+
+// Veilbreak Edit Start
+/obj/machinery/ore_silo/colony_lathe/ui_data(mob/user)
+	var/list/data = ..()
+	data["beeps"] = beeps
+	return data
+
+/obj/machinery/ore_silo/colony_lathe/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
+	. = ..()
+	if(.)
+		return
+	if(action == "toggle_beep")
+		beeps = !beeps
+		var/beep_status = beeps ? "enable" : "disable"
+		to_chat(ui.user, span_notice("You [beep_status] [src]'s beeping."))
+		return TRUE
+// Veilbreak Edit End
 
 /obj/machinery/ore_silo/colony_lathe/default_deconstruction_crowbar()
 	return
