@@ -276,9 +276,7 @@
 	TEST_ASSERT(!length(portal.linked_fishing_spots), "We managed to link to an unlinkable fishing spot")
 
 /obj/structure/toilet/unit_test/Initialize(mapload)
-	. = ..()
-	if(!HAS_TRAIT(src, TRAIT_FISHING_SPOT)) //Ensure this toilet has a fishing spot because only maploaded ones have it.
-		AddComponent(/datum/component/fishing_spot, GLOB.preset_fish_sources[/datum/fish_source/toilet])
+	return ..()
 
 // we want no default spawns in this unit test
 /datum/chasm_detritus/restricted/bodies/no_defaults
