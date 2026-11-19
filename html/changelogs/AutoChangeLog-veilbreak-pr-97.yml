@@ -1,5 +1,0 @@
-author: "MysteryMan21333"
-delete-after: True
-changes:
-  - rscadd: "Added a mute button to the Colony Ore Silo."
-  - bugfix: "Fixed a error that was constantly popping up whenever trying to boot in, weapon_redemption.dm."

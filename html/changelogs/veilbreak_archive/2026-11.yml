@@ -7,3 +7,21 @@
   MysteryMan21333:
   - rscadd: Added new holosynth species.
   - rscadd: 'Added a new haircut style from citadel: "Mia".'
+2026-11-19:
+  MysteryMan21333:
+  - rscadd: Added the Jabroni Outfit to the loadout menu.
+  - rscadd: Added a mute button to the Colony Ore Silo.
+  - bugfix: Fixed a error that was constantly popping up whenever trying to boot in,
+      weapon_redemption.dm.
+  - qol: Allows players to spawn with a bottle of pills to help with anxiety.
+  - qol: Radios/Comms, no longer mess with the quirk.
+  - qol: If you have Well-Trained and Social Anxiety on one character, their now effected
+      with whispering.
+  - balance: Rebalances the Social Anxiety perk to no longer be a problem in larger
+      crowds.
+  - bugfix: Fixs the issue requested by discord where players had to hide in a locker
+      to calm down.
+  - qol: Craftable toilets can now be fished in, they also start with water when crafted.
+  - rscadd: Added a new research branch for the Tattoo Kit to be researched and printed
+      via service protolathe.
+  - qol: Tattoo kit is now able to be bought in the LustWish.
