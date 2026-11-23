@@ -11,6 +11,8 @@
 
 	/// If TRUE, this program only modifies Centcom accesses.
 	var/is_centcom = FALSE
+	/// If TRUE, this program modifies hidden (faction) accesses instead of visible station accesses.
+	var/manages_hidden_access = FALSE
 	/// If TRUE, this program is authenticated with limited departmental access.
 	var/minor = FALSE
 	/// The name/assignment combo of the ID card used to authenticate.
@@ -226,15 +228,24 @@
 				stack_trace("[key_name(usr)] ([usr]) attempted to add invalid access \[[access_type]\] to [modified_id]")
 				return TRUE
 
-			if(access_type in modified_id.access)
-				modified_id.remove_access(list(access_type))
-				LOG_ID_ACCESS_CHANGE(user, modified_id, "removed [SSid_access.get_access_desc(access_type)]")
-				return TRUE
+			// Syndicate consoles manage the card's hidden (faction) access, while
+			// Nanotrasen consoles only touch the visible station access.
+			if(manages_hidden_access)
+				if(access_type in modified_id.hidden_access)
+					modified_id.hidden_access -= access_type
+					LOG_ID_ACCESS_CHANGE(user, modified_id, "removed [SSid_access.get_access_desc(access_type)] (hidden)")
+					return TRUE
+				modified_id.hidden_access |= access_type
+			else
+				if(access_type in modified_id.access)
+					modified_id.remove_access(list(access_type))
+					LOG_ID_ACCESS_CHANGE(user, modified_id, "removed [SSid_access.get_access_desc(access_type)]")
+					return TRUE
 
-			if(!modified_id.add_access(list(access_type), try_wildcard))
-				to_chat(usr, span_notice("ID error: ID card rejected your attempted access modification."))
-				LOG_ID_ACCESS_CHANGE(user, modified_id, "failed to add [SSid_access.get_access_desc(access_type)][try_wildcard ? " with wildcard [try_wildcard]" : ""]")
-				return TRUE
+				if(!modified_id.add_access(list(access_type), try_wildcard))
+					to_chat(usr, span_notice("ID error: ID card rejected your attempted access modification."))
+					LOG_ID_ACCESS_CHANGE(user, modified_id, "failed to add [SSid_access.get_access_desc(access_type)][try_wildcard ? " with wildcard [try_wildcard]" : ""]")
+					return TRUE
 
 			if(access_type in ACCESS_ALERT_ADMINS)
 				message_admins("[ADMIN_LOOKUPFLW(user)] just added [SSid_access.get_access_desc(access_type)] to an ID card [ADMIN_VV(modified_id)] [(modified_id.registered_name) ? "belonging to [modified_id.registered_name]." : "with no registered name."]")
@@ -256,7 +267,31 @@
 				if(trim.assignment != template_name)
 					continue
 
+				var/mob/living/carbon/human/holder = find_id_holder(modified_id)
+				// Preserve the card's original access as hidden access before it is
+				// cleared, but only for actual secret factions (syndicate/tarkon)
+				// being "hired" undercover. This keeps their real faction access
+				// functional without showing it on the ID. Neutral ghost roles
+				// (stowaways, etc.) become plain crew with no hidden access layer.
+				if(holder && (is_syndicate(holder) || is_tarkon_crew(holder)))
+					modified_id.hidden_access |= modified_id.access
+
+				// Apply the base trim before writing access so add_trim_access_to_card
+				// classifies the job's accesses correctly. Otherwise non-matching
+				// accesses are mis-sorted as wildcards and skipped, leaving the card
+				// under-access.
+				modified_id.trim = trim
 				SSid_access.add_trim_access_to_card(modified_id, trim_path)
+				modified_id.update_icon()
+				// Also update the mind's assigned role so the crew monitor (and other
+				// systems) reflect the new job. Antag datums and mob factions are left
+				// untouched, so an antagonist "hired" by Nanotrasen keeps their antag
+				// role while gaining the station job tag (a secret antag).
+				if(istype(trim, /datum/id_trim/job))
+					var/datum/id_trim/job/job_trim = trim
+					var/datum/job/new_job = job_trim.find_job()
+					if(new_job && holder)
+						holder.mind?.set_assigned_role(new_job)
 				return TRUE
 
 			stack_trace("[key_name(usr)] ([usr]) attempted to apply invalid template \[[template_name]\] to [modified_id]")
@@ -329,7 +364,7 @@
 	data["id_name"] = card.name
 	data["id_rank"] = card.assignment || "Unassigned"
 	data["id_owner"] = card.registered_name || "-----"
-	data["access_on_card"] = card.access || list()
+	data["access_on_card"] = manages_hidden_access ? (card.hidden_access || list()) : (card.access || list())
 	data["wildcard_slots"] = card.wildcard_slots || list()
 	data["id_age"] = card.registered_age
 
@@ -338,3 +373,54 @@
 	data["trim_access"] = card_trim?.access || list()
 
 	return data
+
+/// Returns the human registered to the given ID card, matching by bank account
+/// ID when possible and falling back to the registered name. Used to update the
+/// holder's assigned role (and other mind state) when their ID is retrimmed.
+/datum/computer_file/program/card_mod/proc/find_id_holder(obj/item/card/id/id_card)
+	var/datum/bank_account/id_account = id_card.registered_account
+	var/id_name = id_card.registered_name
+
+	// For infiltrator cards under a cover identity, match against the real
+	// (hidden) identity rather than the forged cover.
+	if(istype(id_card, /obj/item/card/id/advanced/chameleon/infiltrator))
+		var/obj/item/card/id/advanced/chameleon/infiltrator/infiltrator_card = id_card
+		if(length(infiltrator_card.hidden_identity))
+			id_account = infiltrator_card.hidden_identity["account"] || id_account
+			id_name = infiltrator_card.hidden_identity["name"] || id_name
+
+	var/mob/living/carbon/human/name_fallback
+	for(var/mob/living/carbon/human/holder in GLOB.player_list)
+		if(id_account && holder.account_id == id_account.account_id)
+			return holder
+		if(!name_fallback && holder.real_name == id_name)
+			name_fallback = holder
+	return name_fallback
+
+/// Syndicate variant of the ID card console. Manages the hidden faction access
+/// on cards rather than the visible station access, and authenticates using
+/// syndicate access.
+/datum/computer_file/program/card_mod/syndicate
+	filename = "syndicateidwriter"
+	filedesc = "Syndicate Access Management"
+	extended_desc = "Program for managing Syndicate faction access on identification cards."
+	download_access = list(ACCESS_SYNDICATE)
+	manages_hidden_access = TRUE
+
+/datum/computer_file/program/card_mod/syndicate/authenticate(mob/user, obj/item/card/id/auth_card)
+	if(!auth_card)
+		return FALSE
+
+	region_access.Cut()
+	valid_access.Cut()
+	job_templates.Cut()
+
+	if((ACCESS_SYNDICATE in auth_card.access) || (ACCESS_SYNDICATE_LEADER in auth_card.access))
+		minor = FALSE
+		authenticated_card = "[auth_card.name]"
+		authenticated_user = auth_card.registered_name ? auth_card.registered_name : "Unknown"
+		valid_access = SSid_access.get_flag_access_list(ACCESS_FLAG_SYNDICATE)
+		computer.update_static_data_for_all_viewers()
+		return TRUE
+
+	return FALSE

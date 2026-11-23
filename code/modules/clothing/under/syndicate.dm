@@ -3,7 +3,7 @@
 	desc = "A nondescript and slightly suspicious looking turtleneck with digital camouflage cargo pants."
 	icon_state = "syndicate"
 	inhand_icon_state = "bl_suit"
-	has_sensor = NO_SENSORS
+	has_sensor = HAS_SENSORS
 	armor_type = /datum/armor/clothing_under/syndicate
 	alt_covers_chest = TRUE
 	icon = 'icons/obj/clothing/under/syndicate.dmi'

@@ -33,9 +33,9 @@
 	/// Does this undersuit have suit sensors in general
 	var/has_sensor = HAS_SENSORS
 	/// Does this undersuit spawn with a random sensor value
-	var/random_sensor = TRUE
+	var/random_sensor = FALSE
 	/// What is the active sensor mode of this udnersuit
-	var/sensor_mode = SENSOR_OFF
+	var/sensor_mode = SENSOR_COORDS
 
 	// Accessory handling (Can be componentized eventually)
 	/// The max number of accessories we can have on this suit.
@@ -313,8 +313,10 @@
 
 	if(has_sensor >= HAS_SENSORS && sensor_mode >= SENSOR_LIVING)
 		GLOB.suit_sensors_list |= wearer
+		attach_clothing_traits(TRAIT_MULTIZ_SUIT_SENSORS)
 	else
 		GLOB.suit_sensors_list -= wearer
+		detach_clothing_traits(TRAIT_MULTIZ_SUIT_SENSORS)
 
 	wearer.med_hud_set_status()
 

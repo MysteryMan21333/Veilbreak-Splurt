@@ -363,6 +363,7 @@
 
 /datum/outfit/lavaland_syndicate/post_equip(mob/living/carbon/human/syndicate, visuals_only = FALSE)
 	syndicate.add_faction(ROLE_SYNDICATE)
+	syndicate.mind?.give_syndicate_codename("lavaland")
 
 /datum/outfit/lavaland_syndicate/comms
 	name = "Lavaland Syndicate Comms Agent"

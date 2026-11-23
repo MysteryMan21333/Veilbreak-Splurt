@@ -80,6 +80,7 @@
 	new_ai.mind.add_antag_datum(nuke_datum, op_datum.nuke_team)
 	LAZYADD(new_ai.mind.special_roles, "Syndicate AI")
 	new_ai.add_faction(ROLE_SYNDICATE)
+	new_ai.mind?.give_syndicate_codename()
 
 	// Make it look evil!!!
 	new_ai.hologram_appearance = mutable_appearance('icons/mob/silicon/ai.dmi',"xeno_queen") //good enough

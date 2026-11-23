@@ -240,6 +240,22 @@
 	agent_card.update_label()
 	agent_card.update_appearance(UPDATE_ICON)
 
+/// Restricted appearance action for infiltrator agent cards. Only cosmetic
+/// card types — no gold/platinum/captain's spare/centcom, which would imply a
+/// high-ranking identity the infiltrator can't plausibly fake.
+/datum/action/item_action/chameleon/change/id/lesser
+	chameleon_name = "ID Card"
+
+/datum/action/item_action/chameleon/change/id/lesser/initialize_disguises()
+	add_chameleon_items(list(
+		/obj/item/card/id/advanced,
+		/obj/item/card/id/advanced/black,
+		/obj/item/card/id/advanced/silver,
+		/obj/item/card/id/advanced/rainbow,
+		/obj/item/card/id/advanced/robotic,
+	), only_root = TRUE)
+	add_chameleon_items(/obj/item/card/id/advanced/black)
+
 /datum/action/item_action/chameleon/change/id_trim
 	chameleon_type = /datum/id_trim
 	chameleon_name = "ID Trim"
@@ -291,6 +307,30 @@
 
 	SSid_access.apply_trim_override(agent_card, picked_trim_path, TRUE)
 
+	agent_card.update_label()
+	agent_card.update_appearance(UPDATE_ICON)
+
+/// Restricted trim action for infiltrator agent cards. Only low-ranking cover
+/// roles from GLOB.infiltrator_lesser_trims may be impersonated.
+/datum/action/item_action/chameleon/change/id_trim/lesser
+	chameleon_name = "ID Trim"
+
+/datum/action/item_action/chameleon/change/id_trim/lesser/initialize_disguises()
+	for(var/trim_path in GLOB.infiltrator_lesser_trims)
+		if(is_type_in_typecache(trim_path, chameleon_blacklist))
+			continue
+		var/datum/id_trim/trim = SSid_access.trim_singletons_by_path[trim_path]
+		if(trim && trim.trim_state && trim.assignment)
+			chameleon_list[format_readable_name(trim)] = trim_path
+			chameleon_typecache[trim_path] = TRUE
+
+/datum/action/item_action/chameleon/change/id_trim/lesser/update_item(picked_trim_path)
+	var/obj/item/card/id/advanced/chameleon/infiltrator/agent_card = target
+	var/datum/id_trim/trim = SSid_access.trim_singletons_by_path[picked_trim_path]
+	SSid_access.apply_trim_override(agent_card, picked_trim_path, TRUE)
+	agent_card.current_disguise_trim = picked_trim_path
+	if(trim?.assignment)
+		agent_card.assignment = trim.assignment
 	agent_card.update_label()
 	agent_card.update_appearance(UPDATE_ICON)
 

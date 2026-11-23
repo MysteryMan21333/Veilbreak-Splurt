@@ -1,7 +1,5 @@
 // This patch expands medical monitoring globally across all non-contiguous Z-levels for offstation operations.
 // It enforces absolute privacy boundaries via strict faction isolation verification loops across consoles.
-#define OVERRIDE_ALARM_PERIOD 45 SECONDS
-#define LOCAL_UNKNOWN_JOB_ID 998
 
 /obj/machinery/computer/crew/tarkon
 	name = "Tarkon Crew Monitoring Console"
@@ -18,11 +16,57 @@
 	name = "Persistence Crew Monitoring Console"
 	desc = "Used to monitor active health sensors of Syndicate operatives and Persistence crew."
 
-/// Returns TRUE if the mob shares the Syndicate faction or was spawned as a Persistence (landcrawler) ghost role.
-/obj/machinery/computer/crew/proc/is_persistence_crew(mob/living/M)
-	if(M.faction && ((ROLE_SYNDICATE in M.faction) || ("syndicate" in M.faction) || (ROLE_PERSISTENCE in M.faction)))
+/// Faction tags that mark someone as syndicate-aligned (open antagonist roles and
+/// syndicate ghost roles alike).
+GLOBAL_LIST_INIT(syndicate_factions, list(
+	ROLE_SYNDICATE,
+	"syndicate", // legacy lowercase tag used by some spawners
+	ROLE_PERSISTENCE,
+	ROLE_SYNDICATE_INFILTRATOR,
+	ROLE_LONE_OPERATIVE,
+	ROLE_OPERATIVE,
+	ROLE_SYNDICATE_BOARDER,
+	ROLE_DS2,
+	ROLE_DAUNTLESS,
+	ROLE_SYNDICATE_CYBERSUN,
+	ROLE_SYNDICATE_CYBERSUN_CAPTAIN,
+	ROLE_SPACE_SYNDICATE,
+	ROLE_LAVALAND_SYNDICATE,
+	ROLE_SYNDICATE_DRONE,
+	ROLE_SYNDICATE_MONKEY,
+	ROLE_SYNDICATE_SABOBORG,
+	ROLE_SYNDICATE_MEDBORG,
+	ROLE_SYNDICATE_ASSAULTBORG,
+))
+
+/// Nanotrasen employees hold a Station-faction job (includes silicons and undercover
+/// station antagonists, who keep their cover job). ERT and Nanotrasen private security
+/// are special-cased because they don't hold a normal Station job but are still NT.
+/proc/is_nanotrasen_employee(mob/living/M)
+	if(M.mind?.assigned_role?.faction == FACTION_STATION)
 		return TRUE
-	if(istype(M.mind?.assigned_role, /datum/job/persistence))
+	if(M.faction && ((FACTION_ERT in M.faction) || (FACTION_NANOTRASEN_PRIVATE in M.faction)))
+		return TRUE
+	// Secondary filter: an infiltrator card presenting its cover identity reads
+	// as Nanotrasen, so an undercover operative shows on the NT crew monitor.
+	var/obj/item/card/id/id_card = M.get_idcard()
+	if(istype(id_card, /obj/item/card/id/advanced/chameleon/infiltrator))
+		var/obj/item/card/id/advanced/chameleon/infiltrator/infiltrator_card = id_card
+		if(infiltrator_card.is_cover_identity())
+			return TRUE
+	return FALSE
+
+/// Syndicate-aligned: open syndicate antagonist roles and syndicate ghost roles.
+/proc/is_syndicate(mob/living/M)
+	if(M.faction)
+		for(var/syndicate_faction in GLOB.syndicate_factions)
+			if(syndicate_faction in M.faction)
+				return TRUE
+	return FALSE
+
+/// Tarkon-affiliated workers (Port Tarkon survivors and Tarkon Industries crew).
+/proc/is_tarkon_crew(mob/living/M)
+	if(M.faction && ((FACTION_TARKON in M.faction) || (ROLE_PORT_TARKON in M.faction)))
 		return TRUE
 	return FALSE
 
@@ -30,156 +74,48 @@
 	if(!istype(M))
 		return FALSE
 
-	var/console_faction = src.get_console_faction()
-
-	if(console_faction == "admin")
-		return TRUE
-
-	if(console_faction == "tarkon")
-		if(M.faction && (("tarkon" in M.faction) || ("Port Tarkon Survivor" in M.faction)))
+	switch(get_console_faction())
+		if("admin")
 			return TRUE
-		return FALSE
-
-	if(console_faction == "persistence")
-		return is_persistence_crew(M)
-
-	if(console_faction == "nanotrasen")
-		if(is_persistence_crew(M))
-			return FALSE
-		if(M.faction)
-			if(("tarkon" in M.faction) || ("Port Tarkon Survivor" in M.faction) || ("void" in M.faction) || ("syndicate" in M.faction) || ("pirate" in M.faction) || ("Abductor" in M.faction) || ("cult" in M.faction) || ("ashwalker" in M.faction))
-				return FALSE
-		return TRUE
+		if("tarkon")
+			return is_tarkon_crew(M)
+		if("syndicate")
+			return is_syndicate(M)
+		if("nanotrasen")
+			return is_nanotrasen_employee(M)
 
 	return FALSE
+
+/// Returns a masked display name for syndicate operatives when viewed from a syndicate
+/// console, so the monitor never leaks their real identity. Returns null otherwise.
+/obj/machinery/computer/crew/proc/get_display_name(mob/living/M)
+	if(get_console_faction() != "syndicate" || !is_syndicate(M))
+		return null
+	if(M.mind)
+		return M.mind.give_syndicate_codename(silent = TRUE)
+	return get_syndicate_codename(M)
+
+/// Deterministic anonymous fallback for mindless syndicates.
+/obj/machinery/computer/crew/proc/get_syndicate_codename(mob/living/M)
+	var/static/list/syndicate_codenames = list(
+		"Viper", "Wraith", "Cobra", "Phantom", "Raven", "Onyx", "Specter",
+		"Havoc", "Nomad", "Rogue", "Ghost", "Falcon", "Jackal", "Widow",
+		"Basilisk", "Revenant", "Umbra", "Zephyr", "Kraken", "Mirage",
+	)
+	var/codename_hash = 0
+	var/ref_text = REF(M)
+	for(var/index in 1 to length(ref_text))
+		codename_hash += text2ascii(copytext(ref_text, index, index + 1))
+	return "[syndicate_codenames[(codename_hash % length(syndicate_codenames)) + 1]]-[codename_hash % 100]"
 
 /obj/machinery/computer/crew/proc/get_console_faction()
 	if(src.type == /obj/machinery/computer/crew/tarkon || initial(src.icon_state) == "crew_tarkon")
 		return "tarkon"
 	if(src.type == /obj/machinery/computer/crew/admin || initial(src.icon_state) == "crew_admin")
 		return "admin"
-	if(istype(src, /obj/machinery/computer/crew/syndie/persistence))
-		return "persistence"
-	// Consoles already mapped (or rebuilt) inside the Persistence landcrawler act as Persistence consoles.
+	if(istype(src, /obj/machinery/computer/crew/syndie))
+		return "syndicate"
+	// Consoles already mapped (or rebuilt) inside the Persistence landcrawler act as Syndicate consoles.
 	if(istype(get_area(src), /area/ruin/space/has_grav/bubbers/persistance))
-		return "persistence"
+		return "syndicate"
 	return "nanotrasen"
-
-/obj/machinery/computer/crew/alarm()
-	if(machine_stat & (NOPOWER|BROKEN))
-		return
-
-	canalarm = FALSE
-
-	for(var/mob/living/carbon/human/mob in GLOB.suit_sensors_list)
-		if(!istype(mob))
-			GLOB.suit_sensors_list -= mob
-			continue
-
-		if(!is_faction_authorized(mob))
-			continue
-
-		var/turf/pos = get_turf(mob)
-		if(!pos)
-			continue
-
-		var/obj/item/clothing/under/uniform = mob.w_uniform
-		if(!istype(uniform) || uniform.has_sensor <= NO_SENSORS || !uniform.sensor_mode)
-			GLOB.suit_sensors_list -= mob
-			continue
-
-		if(uniform.sensor_mode == SENSOR_COORDS && (uniform.has_sensor != BROKEN_SENSORS) && IS_CRITICAL(mob) || mob.stat == DEAD || isprotean(mob))
-			if(mob.get_dnr())
-				continue
-			if(isprotean(mob))
-				if(mob.mind && (mob.mind.assigned_role.title == "Janitor" || mob.mind.assigned_role.title == "Assistant"))
-					continue
-			canalarm = TRUE
-			break
-
-	if(canalarm && COOLDOWN_FINISHED(src, alarm_cooldown))
-		COOLDOWN_START(src, alarm_cooldown, OVERRIDE_ALARM_PERIOD)
-		playsound(src.loc, 'sound/machines/beep/twobeep.ogg', 50, FALSE)
-
-	alarm_timer = addtimer(CALLBACK(src, PROC_REF(alarm)), SENSORS_UPDATE_PERIOD)
-
-/datum/crewmonitor/update_data(z)
-	var/list/results = list()
-
-	var/obj/machinery/computer/crew/console = ui_host(usr)
-	var/has_console = istype(console)
-
-	for(var/tracked_mob in GLOB.suit_sensors_list | GLOB.nanite_sensors_list)
-		if(!tracked_mob)
-			continue
-
-		var/mob/living/tracked_living_mob = tracked_mob
-		var/turf/pos = get_turf(tracked_living_mob)
-		if(!pos)
-			continue
-
-		if(has_console && !console.is_faction_authorized(tracked_living_mob))
-			continue
-
-		var/sensor_mode = 0
-		var/has_monitoring_nanites = FALSE
-		var/mob/living/carbon/human/tracked_human = tracked_living_mob
-
-		if(tracked_living_mob in GLOB.nanite_sensors_list)
-			sensor_mode = SENSOR_COORDS
-			has_monitoring_nanites = TRUE
-		else if(!ishuman(tracked_human))
-			continue
-		else
-			var/obj/item/clothing/under/uniform = tracked_human.w_uniform
-			if(!has_monitoring_nanites)
-				if(!istype(uniform) || uniform.has_sensor == NO_SENSORS || !uniform.sensor_mode)
-					continue
-				sensor_mode = uniform.sensor_mode
-
-		var/list/entry = list(
-			"ref"         = REF(tracked_living_mob),
-			"name"        = "Unknown",
-			"ijob"        = LOCAL_UNKNOWN_JOB_ID,
-			"life_status" = 0
-		)
-
-		var/obj/item/card/id/id_card = tracked_living_mob.get_idcard(hand_first = FALSE)
-		if(id_card)
-			entry["name"] = id_card.registered_name
-			entry["assignment"] = id_card.assignment
-			var/trim_assignment = id_card.get_trim_assignment()
-			if(jobs[trim_assignment] != null)
-				entry["ijob"] = jobs[trim_assignment]
-
-		if(issynthetic(tracked_human) || isprotean(tracked_human))
-			entry["is_robot"] = TRUE
-
-		if(tracked_living_mob.stat == DEAD)
-			entry["life_status"] = 3
-		else if(tracked_living_mob.health <= 0)
-			entry["life_status"] = 1
-		else
-			entry["life_status"] = 0
-
-		if(sensor_mode >= 1)
-			entry["area"] = get_area_name(tracked_living_mob, format_text = TRUE)
-
-		if(sensor_mode >= 2)
-			entry["is_dnr"]   = tracked_human.get_dnr()
-			entry["health"]   = tracked_living_mob.health
-			entry["oxydam"]   = tracked_living_mob.getOxyLoss()
-			entry["toxdam"]   = tracked_living_mob.getToxLoss()
-			entry["burndam"]  = tracked_living_mob.getFireLoss()
-			entry["brutedam"] = tracked_living_mob.getBruteLoss()
-
-		if(sensor_mode >= 3)
-			entry["x"] = pos.x
-			entry["y"] = pos.y
-			entry["z"] = pos.z
-
-		results += list(entry)
-
-	return results
-
-#undef LOCAL_UNKNOWN_JOB_ID

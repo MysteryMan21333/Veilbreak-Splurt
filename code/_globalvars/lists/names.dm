@@ -28,6 +28,23 @@ GLOBAL_LIST_INIT(nightmare_names, world.file2list("strings/names/nightmare.txt")
 GLOBAL_LIST_INIT(ninja_names, world.file2list("strings/names/ninjaname.txt"))
 GLOBAL_LIST_INIT(ninja_titles, world.file2list("strings/names/ninjatitle.txt"))
 GLOBAL_LIST_INIT(operative_aliases, world.file2list("strings/names/operative_alias.txt"))
+GLOBAL_VAR_INIT(syndicate_codename_counter, 0)
+/// Maps a syndicate group to the 2-4 letter callsign prefix used by that group.
+GLOBAL_LIST_INIT(syndicate_codename_groups, list(
+	"cybersun"    = "CYB",
+	"lavaland"    = "LAVA",
+	"space"       = "SPC",
+	"persistence" = "PRST",
+	"dauntless"   = "DNTL",
+	"ds2"         = "DS2",
+	"boarder"     = "BRD",
+	"infiltrator" = "INF",
+	"loneop"      = "LONE",
+	"assault"     = "ASLT",
+	"bitrunning"  = "VIR",
+	"nukeop"      = "NUK",
+	"generic"     = "SYN",
+))
 GLOBAL_LIST_INIT(plasmaman_names, world.file2list("strings/names/plasmaman.txt"))
 GLOBAL_LIST_INIT(posibrain_names, world.file2list("strings/names/posibrain.txt"))
 GLOBAL_LIST_INIT(religion_names, world.file2list("strings/names/religion.txt"))

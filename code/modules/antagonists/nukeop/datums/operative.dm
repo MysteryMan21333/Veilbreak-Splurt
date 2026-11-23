@@ -169,9 +169,12 @@
 			var/first_name = owner.current.client?.prefs?.read_preference(/datum/preference/name/operative_alias) || pick(GLOB.operative_aliases)
 			var/chosen_name = "[first_name] [nuke_team.syndicate_name]"
 			human_to_rename.fully_replace_character_name(null, chosen_name)
+			owner.syndicate_codename = chosen_name
 		else
 			var/number = nuke_team?.members.Find(owner) || 1
-			owner.current.fully_replace_character_name(null, "[nuke_team.syndicate_name] Operative #[number]")
+			var/syndicate_alias = "[nuke_team.syndicate_name] Operative #[number]"
+			owner.current.fully_replace_character_name(null, syndicate_alias)
+			owner.syndicate_codename = syndicate_alias
 
 /datum/antagonist/nukeop/proc/memorize_code()
 	antag_memory += "<B>[nuke_team.tracked_nuke] Code</B>: [nuke_team.memorized_code]<br>"

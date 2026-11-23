@@ -1,4 +1,4 @@
-#define ALARM_PERIOD 45 SECONDS
+#define ALARM_PERIOD 5 SECONDS
 
 /obj/machinery/computer/crew
 	luminosity = 1
@@ -6,15 +6,19 @@
 	brightness_on = 1.7
 	var/canalarm = FALSE
 	var/alarm_timer
+	/// Whether the death alarm beep is muted.
+	var/muted = FALSE
 	COOLDOWN_DECLARE(alarm_cooldown)
 
 /obj/machinery/computer/crew/Initialize(mapload, obj/item/circuitboard/C)
 	. = ..()
+	AddComponent(/datum/component/usb_port, typecacheof(list(/obj/item/circuit_component/medical_console_data), only_root_path = TRUE))
 	alarm()
-	if(isnull(alarm_timer))
-		alarm_timer = addtimer(CALLBACK(src, PROC_REF(alarm)), SENSORS_UPDATE_PERIOD)
 
 /obj/machinery/computer/crew/proc/alarm()
+	// Always reschedule first, so an unpowered/broken console resumes polling once fixed.
+	alarm_timer = addtimer(CALLBACK(src, PROC_REF(alarm)), 5 SECONDS)
+
 	if(machine_stat & (NOPOWER|BROKEN))
 		return
 
@@ -26,6 +30,9 @@
 
 		if(!istype(mob))
 			GLOB.suit_sensors_list -= mob
+			continue
+
+		if(!is_faction_authorized(mob))
 			continue
 
 		if(pos.z != z && (!is_station_level(pos.z) || !is_station_level(z)) && !HAS_TRAIT(mob, TRAIT_MULTIZ_SUIT_SENSORS))
@@ -53,15 +60,21 @@
 		update_appearance()
 		set_light(l_range = 1.9, l_power = 5, l_color = CIRCUIT_COLOR_SECURITY, l_on = TRUE)
 		if(COOLDOWN_FINISHED(src, alarm_cooldown))
-			playsound(source = src, soundin = 'sound/machines/beep/twobeep.ogg', vol = 50, vary = TRUE)
-			spasm_animation(1 SECONDS)
 			COOLDOWN_START(src, alarm_cooldown, ALARM_PERIOD)
+			if(!muted)
+				playsound(source = src, soundin = 'sound/machines/beep/twobeep.ogg', vol = 50, vary = TRUE)
+				spasm_animation(1 SECONDS)
 	else
 		icon_keyboard = initial(icon_keyboard)
 		update_appearance()
 		set_light(l_range = initial(brightness_on), l_power = initial(light_power), l_color = initial(light_color), l_on = TRUE)
-	alarm_timer = addtimer(CALLBACK(src, PROC_REF(alarm)), SENSORS_UPDATE_PERIOD)
 
 	return canalarm
+
+/obj/machinery/computer/crew/verb/toggle_alarm_sound()
+	set name = "Toggle Alarm Sound"
+	set category = "Object"
+	muted = !muted
+	to_chat(usr, span_notice("The alarm sound is now [muted ? "muted" : "on"]."))
 
 #undef ALARM_PERIOD

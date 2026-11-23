@@ -65,4 +65,5 @@
 
 /datum/outfit/syndicateinfiltrator/post_equip(mob/living/carbon/human/H)
 	H.add_faction(ROLE_SYNDICATE)
+	H.mind?.give_syndicate_codename()
 	H.update_icons()
