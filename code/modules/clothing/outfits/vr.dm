@@ -33,6 +33,7 @@
 	var/obj/item/implant/explosive/E = new/obj/item/implant/explosive(H)
 	E.implant(H)
 	H.add_faction(ROLE_SYNDICATE)
+	H.mind?.give_syndicate_codename()
 	H.update_icons()
 
 /obj/item/paper/fluff/vr/fluke_ops

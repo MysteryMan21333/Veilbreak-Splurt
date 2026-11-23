@@ -103,3 +103,4 @@
 
 /datum/outfit/virtual_syndicate/post_equip(mob/living/carbon/human/user, visuals_only)
 	user.add_faction(ROLE_SYNDICATE)
+	user.mind?.give_syndicate_codename("bitrunning")

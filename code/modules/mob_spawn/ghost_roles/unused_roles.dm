@@ -112,6 +112,7 @@
 
 /datum/outfit/syndicate_empty/post_equip(mob/living/carbon/human/H)
 	H.add_faction(ROLE_SYNDICATE)
+	H.mind?.give_syndicate_codename("space")
 
 //For ghost bar.
 /obj/effect/mob_spawn/ghost_role/human/space_bar_patron
@@ -317,6 +318,7 @@
 
 /datum/outfit/syndicatespace/post_equip(mob/living/carbon/human/syndie_scum)
 	syndie_scum.add_faction(ROLE_SYNDICATE)
+	syndie_scum.mind?.give_syndicate_codename("cybersun")
 
 /datum/outfit/syndicatespace/syndicrew
 	name = "Syndicate Ship Crew Member"

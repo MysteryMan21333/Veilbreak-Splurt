@@ -153,16 +153,20 @@ type CrewSensor = {
   area: string | undefined;
   health: number;
   ref: string;
+  x: number | undefined;
+  y: number | undefined;
+  z: number | undefined;
 };
 
 type CrewConsoleData = {
   sensors: CrewSensor[];
   link_allowed: BooleanLike;
+  muted: BooleanLike;
 };
 
 const CrewTable = () => {
-  const { data } = useBackend<CrewConsoleData>();
-  const { sensors } = data;
+  const { act, data } = useBackend<CrewConsoleData>();
+  const { sensors = [], muted } = data;
 
   const [sortAsc, setSortAsc] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,6 +207,12 @@ const CrewTable = () => {
             />
           </Button>
           <Input placeholder="Search for name..." onChange={setSearchQuery} />
+          <Button
+            icon={muted ? 'volume-mute' : 'volume-up'}
+            color={muted ? 'bad' : 'good'}
+            onClick={() => act('toggle_mute')}
+            tooltip={muted ? 'Unmute alarm sound' : 'Mute alarm sound'}
+          />
         </>
       }
     >
@@ -210,6 +220,7 @@ const CrewTable = () => {
         <Table.Row>
           <Table.Cell bold>Name</Table.Cell>
           <Table.Cell bold collapsing textAlign="center" />
+          <Table.Cell bold collapsing />
           <Table.Cell bold collapsing />
           <Table.Cell bold collapsing textAlign="center">
             Vitals
@@ -251,6 +262,9 @@ const CrewTableEntry = (props: CrewTableEntryProps) => {
     burndam,
     brutedam,
     area,
+    x,
+    y,
+    z,
   } = sensor_data;
 
   return (
@@ -307,7 +321,20 @@ const CrewTableEntry = (props: CrewTableEntryProps) => {
       </Table.Cell>
       <Table.Cell>
         {area !== '~' && area !== undefined ? (
-          area
+          <>
+            {area}
+            {x !== undefined && y !== undefined && (
+              <>
+                {' ('}
+                <Box inline color="red">{x}x</Box>
+                {', '}
+                <Box inline color="green">{y}y</Box>
+                {', '}
+                <Box inline color="blue">{z}z</Box>
+                {')'}
+              </>
+            )}
+          </>
         ) : (
           <Icon name="question" color="#ffffff" size={1} />
         )}

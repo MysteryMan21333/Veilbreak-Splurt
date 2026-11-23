@@ -36,6 +36,8 @@
 	var/name
 	/// replaces name for observers name if set
 	var/ghostname
+	/// Syndicate callsign shown on syndicate crew monitors instead of the real name.
+	var/syndicate_codename
 	/// Current mob this mind datum is attached to
 	var/mob/living/current
 	/// Is this mind active?
@@ -169,6 +171,52 @@
 /datum/mind/proc/clear_current(datum/source)
 	SIGNAL_HANDLER
 	set_current(null)
+
+/// Assigns (or returns) a stable syndicate callsign used to mask the mind's real
+/// identity on syndicate crew monitors. Cached on the mind so it persists all round.
+/datum/mind/proc/give_syndicate_codename(group = null, silent = FALSE)
+	if(syndicate_codename)
+		return syndicate_codename
+	if(isnull(group))
+		group = get_syndicate_group()
+	var/prefix = GLOB.syndicate_codename_groups[group] || GLOB.syndicate_codename_groups["generic"]
+	var/first_name = current?.client?.prefs?.read_preference(/datum/preference/name/operative_alias) || pick(GLOB.operative_aliases)
+	syndicate_codename = "[prefix]-[first_name]-[++GLOB.syndicate_codename_counter]"
+	if(!silent && current)
+		to_chat(current, span_notice("Your syndicate callsign is <b>[syndicate_codename]</b>."))
+	return syndicate_codename
+
+/// Which syndicate group this mind belongs to, used to theme its callsign.
+/datum/mind/proc/get_syndicate_group()
+	var/datum/job/job = assigned_role
+	if(job)
+		switch(job.type)
+			if(/datum/job/syndicate_cybersun, /datum/job/syndicate_cybersun_captain)
+				return "cybersun"
+			if(/datum/job/lavaland_syndicate)
+				return "lavaland"
+			if(/datum/job/space_syndicate)
+				return "space"
+			if(/datum/job/persistence)
+				return "persistence"
+			if(/datum/job/dauntless)
+				return "dauntless"
+			if(/datum/job/ds2)
+				return "ds2"
+			if(/datum/job/syndicate_boarder)
+				return "boarder"
+			if(/datum/job/nuclear_operative)
+				return "nukeop"
+	if(current?.faction)
+		if(ROLE_SYNDICATE_INFILTRATOR in current.faction)
+			return "infiltrator"
+		if(ROLE_LONE_OPERATIVE in current.faction)
+			return "loneop"
+		if(ROLE_DAUNTLESS in current.faction)
+			return "dauntless"
+		if(ROLE_PERSISTENCE in current.faction)
+			return "persistence"
+	return "generic"
 
 /datum/mind/proc/transfer_to(mob/new_character, force_key_move = 0)
 	set_original_character(null)

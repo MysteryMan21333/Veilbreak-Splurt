@@ -74,6 +74,8 @@
 	var/callsign = pick(GLOB.callsigns_nri)
 	var/number = pick(GLOB.phonetic_alphabet_numbers)
 	user.fully_replace_character_name(null, "[callsign] [number]")
+	if(user.mind)
+		user.mind.syndicate_codename = "[callsign] [number]"
 
 	// make sure we update the ID's name too
 	var/obj/item/card/id/id_card = user.wear_id

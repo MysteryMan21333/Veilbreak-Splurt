@@ -203,7 +203,7 @@
 		/obj/item/storage/box/survival = 1,
 		/obj/item/crowbar = 1,
 		)
-	id = /obj/item/card/id/advanced/black
+	id = /obj/item/card/id/advanced/chameleon/infiltrator
 	implants = list(/obj/item/implant/weapons_auth)
 	id_trim = /datum/id_trim/syndicom/bubberstation/dauntless
 
@@ -258,6 +258,7 @@
 /datum/outfit/dauntless/syndicate/brigoff
 	name = "Dauntless Brig Officer"
 	uniform = /obj/item/clothing/under/syndicate/combat
+	id = /obj/item/card/id/advanced/black
 	id_trim = /datum/id_trim/syndicom/bubberstation/dauntless/brigofficer
 	gloves = /obj/item/clothing/gloves/tackler/combat/insulated
 	suit = /obj/item/clothing/suit/armor/bulletproof/old
@@ -297,6 +298,9 @@
 
 /datum/outfit/dauntless/syndicate/post_equip(mob/living/carbon/human/syndicate)
 	syndicate.add_faction(ROLE_SYNDICATE)
+	syndicate.mind?.give_syndicate_codename("dauntless")
+	prime_infiltrator_id(syndicate)
+	enable_suit_sensor(syndicate)
 	return ..()
 
 // Dauntless Command
@@ -356,4 +360,6 @@
 
 /datum/outfit/dauntless/command/post_equip(mob/living/carbon/human/syndicate)
 	syndicate.add_faction(ROLE_SYNDICATE)
+	syndicate.mind?.give_syndicate_codename("dauntless")
+	enable_suit_sensor(syndicate)
 	return ..()

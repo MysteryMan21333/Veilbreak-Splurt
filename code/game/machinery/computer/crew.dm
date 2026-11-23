@@ -61,7 +61,7 @@
 		return
 
 	var/list/new_table = list()
-	for(var/list/player_record as anything in GLOB.crewmonitor.update_data(attached_console.z))
+	for(var/list/player_record as anything in GLOB.crewmonitor.update_data(attached_console.z, attached_console))
 		var/list/entry = list()
 		entry["name"] = player_record["name"]
 		entry["job"] = player_record["assignment"]
@@ -79,6 +79,7 @@
 
 /obj/machinery/computer/crew/syndie
 	icon_state = MAP_SWITCH("computer", "/obj/machinery/computer/crew/syndie")
+	icon_screen = "commsyndie"
 	icon_keyboard = "syndie_key"
 
 /obj/machinery/computer/crew/ui_interact(mob/user)
@@ -194,19 +195,46 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 	var/datum/weakref/host_ref = ui_sources[WEAKREF(user)]
 	return host_ref?.resolve()
 
+/// Reads the alarm mute state from a crew-monitor host (console or handheld).
+/datum/crewmonitor/proc/get_host_muted(atom/movable/host)
+	if(istype(host, /obj/machinery/computer/crew))
+		var/obj/machinery/computer/crew/console = host
+		return console.muted
+	if(istype(host, /obj/item/sensor_device))
+		var/obj/item/sensor_device/handheld = host
+		return handheld.muted
+	return FALSE
+
+/// Toggles the alarm mute state on a crew-monitor host. Returns the new state.
+/datum/crewmonitor/proc/toggle_host_muted(atom/movable/host)
+	if(istype(host, /obj/machinery/computer/crew))
+		var/obj/machinery/computer/crew/console = host
+		console.muted = !console.muted
+		return console.muted
+	if(istype(host, /obj/item/sensor_device))
+		var/obj/item/sensor_device/handheld = host
+		handheld.muted = !handheld.muted
+		return handheld.muted
+	return FALSE
+
 /datum/crewmonitor/ui_data(mob/user)
 	var/z = user.z
 	if(!z)
 		var/turf/T = get_turf(user)
 		z = T.z
+	var/atom/movable/host = ui_host(user)
+	var/obj/machinery/computer/crew/console = istype(host, /obj/machinery/computer/crew) ? host : null
 	. = list(
-		"sensors" = update_data(z),
+		"sensors" = update_data(z, console),
 		"link_allowed" = HAS_AI_ACCESS(user),
+		"muted" = get_host_muted(host),
 	)
 
-/datum/crewmonitor/proc/update_data(z)
-	if(data_by_z["[z]"] && last_update["[z]"] && world.time <= last_update["[z]"] + SENSORS_UPDATE_PERIOD)
-		return data_by_z["[z]"]
+/datum/crewmonitor/proc/update_data(z, obj/machinery/computer/crew/console = null)
+	var/cache_faction = console?.get_console_faction() || "nanotrasen"
+	var/cache_key = "[z]-[cache_faction]"
+	if(data_by_z[cache_key] && last_update[cache_key] && world.time <= last_update[cache_key] + SENSORS_UPDATE_PERIOD)
+		return data_by_z[cache_key]
 
 	var/list/results = list()
 	for(var/tracked_mob in GLOB.suit_sensors_list | GLOB.nanite_sensors_list) // BUBBER CHANGE - NANITES
@@ -222,6 +250,14 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 		// Is our target in nullspace for some reason?
 		if(!pos)
 			stack_trace("Tracked mob has no loc and is likely in nullspace: [tracked_living_mob] ([tracked_living_mob.type])")
+			continue
+
+		// Faction isolation: hide mobs this console isn't authorized to view.
+		// A null console (handheld monitor) behaves as a Nanotrasen monitor.
+		if(console)
+			if(!console.is_faction_authorized(tracked_living_mob))
+				continue
+		else if(!is_nanotrasen_employee(tracked_living_mob))
 			continue
 
 		// Machinery and the target should be on the same level or different levels of the same station
@@ -273,7 +309,7 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 		// ID and id-related data
 		var/obj/item/card/id/id_card = tracked_living_mob.get_idcard(hand_first = FALSE)
 		if (id_card)
-			entry["name"] = id_card.registered_name
+			entry["name"] = console?.get_display_name(tracked_living_mob) || id_card.registered_name
 			entry["assignment"] = id_card.assignment
 			var/trim_assignment = id_card.get_trim_assignment()
 			if (jobs[trim_assignment] != null)
@@ -323,12 +359,15 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 		// Location
 		if (sensor_mode >= SENSOR_COORDS)
 			entry["area"] = get_area_name(tracked_living_mob, format_text = TRUE)
+			entry["x"] = pos.x
+			entry["y"] = pos.y
+			entry["z"] = pos.z
 
 		results[++results.len] = entry
 
 	// Cache result
-	data_by_z["[z]"] = results
-	last_update["[z]"] = world.time
+	data_by_z[cache_key] = results
+	last_update[cache_key] = world.time
 
 	return results
 
@@ -343,6 +382,9 @@ GLOBAL_DATUM_INIT(crewmonitor, /datum/crewmonitor, new)
 			if(!istype(AI))
 				return
 			AI.ai_tracking_tool.track_name(AI, params["name"])
+		if ("toggle_mute")
+			toggle_host_muted(ui_host(usr))
+			return TRUE
 
 // #undef SENSORS_UPDATE_PERIOD // BUBBER EDIT REMOVAL - Defined in code/__DEFINES/~~bubber_defines/misc.dm
 #undef UNKNOWN_JOB_ID

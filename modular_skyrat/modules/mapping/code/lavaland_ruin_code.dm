@@ -28,6 +28,7 @@
 
 /datum/outfit/lavaland_syndicate/post_equip(mob/living/carbon/human/syndicate, visualsOnly = FALSE)
 	syndicate.add_faction(ROLE_SYNDICATE)
+	syndicate.mind?.give_syndicate_codename("lavaland")
 
 	var/obj/item/card/id/id_card = syndicate.wear_id
 	if(istype(id_card))

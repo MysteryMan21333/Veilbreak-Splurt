@@ -25,6 +25,7 @@
 	weapons_authorisation.implant(equipping_human)
 
 	equipping_human.add_faction(ROLE_SYNDICATE)
+	equipping_human.mind?.give_syndicate_codename("assault")
 
 	equipping_human.update_icons()
 

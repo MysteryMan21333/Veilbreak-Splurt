@@ -111,6 +111,12 @@
 	/// Access levels held by this card.
 	var/list/access = list()
 
+	/// Hidden access levels held by this card. Always active for door and turret
+	/// checks (see GetAccess), but invisible to Nanotrasen card consoles. Used to
+	/// preserve a secret faction identity (e.g. a syndicate infiltrator's original
+	/// base access) while they carry a cover identity.
+	var/list/hidden_access = list()
+
 	/// List of wildcard slot names as keys with lists of wildcard data as values.
 	var/list/wildcard_slots = list()
 
@@ -960,6 +966,11 @@
 	for(var/dept in reta_temp_access)
 		if(reta_temp_access[dept])
 			total_access |= reta_temp_access[dept]
+
+	// Hidden access is always active so faction turrets and doors still recognize
+	// the card's true owner even while they're using a cover identity.
+	if(length(hidden_access))
+		total_access |= hidden_access
 
 	return total_access
 
@@ -1917,6 +1928,11 @@
 			LOG_ID_ACCESS_CHANGE(usr, src, "added [SSid_access.get_access_desc(access_type)]")
 			return TRUE
 
+/// Prompts the user for a cover occupation when forging the card. Overridden by
+/// the infiltrator card to restrict options to low-ranking roles.
+/obj/item/card/id/advanced/chameleon/proc/forge_occupation(mob/user)
+	return tgui_input_text(user, "What occupation would you like to put on this card?\nNote: This will not grant any access levels.", "Agent card job assignment", assignment ? assignment : "Assistant", max_length = MAX_NAME_LEN)
+
 /obj/item/card/id/advanced/chameleon/attack_self(mob/user)
 	if(!user.can_perform_action(user, NEED_DEXTERITY| FORBID_TELEKINESIS_REACH))
 		return ..()
@@ -1959,7 +1975,7 @@
 		else
 			input_name = "[pick(GLOB.first_names)] [pick(GLOB.last_names)]"
 
-	var/target_occupation = tgui_input_text(user, "What occupation would you like to put on this card?\nNote: This will not grant any access levels.", "Agent card job assignment", assignment ? assignment : "Assistant", max_length = MAX_NAME_LEN)
+	var/target_occupation = forge_occupation(user)
 	if(!after_input_check(user))
 		return TRUE
 	var/default_age = AGE_MIN
@@ -1988,6 +2004,11 @@
 	to_chat(user, span_notice("You successfully forge the ID card."))
 	user.log_message("forged \the [initial(name)] with name \"[registered_name]\", occupation \"[assignment]\" and trim \"[trim?.assignment]\".", LOG_GAME)
 
+	try_auto_assign_account(user)
+
+/// Attempts to link the forger's own bank account after forging, if the card
+/// has none. Overridden by the infiltrator card to keep the cover unlinked.
+/obj/item/card/id/advanced/chameleon/proc/try_auto_assign_account(mob/user)
 	if(!ishuman(user) || registered_account)
 		return
 
@@ -2012,6 +2033,165 @@
 		context[SCREENTIP_CONTEXT_RMB] = "Scan for access"
 		return CONTEXTUAL_SCREENTIP_SET
 	return .
+
+/// Lesser cover occupations an infiltrator agent card is allowed to impersonate.
+/// Explicitly excludes security, command, and high-profile roles that require
+/// extensive background checks.
+GLOBAL_LIST_INIT(infiltrator_lesser_trims, list(
+	/datum/id_trim/job/assistant,
+	/datum/id_trim/job/shaft_miner,
+	/datum/id_trim/job/cargo_technician,
+	/datum/id_trim/job/janitor,
+	/datum/id_trim/job/cook,
+	/datum/id_trim/job/bartender,
+	/datum/id_trim/job/medical_doctor,
+	/datum/id_trim/job/paramedic,
+))
+
+/// Agent card issued to Syndicate infiltration operatives. Can only forge
+/// low-ranking cover roles, and can swap between its cover identity and the
+/// holder's real identity via AltClick (syndicate-only).
+/obj/item/card/id/advanced/chameleon/infiltrator
+	name = "infiltrator agent card"
+	desc = "An advanced chameleon ID card issued to Syndicate infiltration operatives. Alt-click to swap between your cover identity and your real identity. Can only impersonate low-ranking roles."
+	actions_types = list(/datum/action/item_action/chameleon/change/id/lesser, /datum/action/item_action/chameleon/change/id_trim/lesser)
+	trim_changeable = TRUE
+
+	/// Snapshot of the alternate identity. AltClick swaps the card's displayed identity with this one.
+	var/list/hidden_identity
+	/// The currently applied disguise trim path, tracked so the toggle can round-trip the cover.
+	var/current_disguise_trim
+
+/obj/item/card/id/advanced/chameleon/infiltrator/forge_occupation(mob/user)
+	// Prime the real identity snapshot lazily on the first forge, before the
+	// name, trim and account are overwritten by the cover identity.
+	if(!length(hidden_identity))
+		hidden_identity = snapshot_identity()
+
+	var/list/trim_options = list()
+	for(var/trim_path in GLOB.infiltrator_lesser_trims)
+		var/datum/id_trim/trim = SSid_access.trim_singletons_by_path[trim_path]
+		if(trim?.assignment)
+			trim_options[trim.assignment] = trim_path
+
+	if(!length(trim_options))
+		return null
+
+	var/picked_assignment = tgui_input_list(user, "Select a cover occupation", "Agent card occupation", trim_options)
+	if(!picked_assignment)
+		return null
+
+	current_disguise_trim = trim_options[picked_assignment]
+	SSid_access.apply_trim_override(src, current_disguise_trim, FALSE)
+	return picked_assignment
+
+/obj/item/card/id/advanced/chameleon/infiltrator/click_alt(mob/living/user)
+	if(!is_syndicate(user) && !anyone)
+		balloon_alert(user, "access denied!")
+		return CLICK_ACTION_BLOCKING
+	toggle_identity(user)
+	return CLICK_ACTION_SUCCESS
+
+/obj/item/card/id/advanced/chameleon/infiltrator/try_auto_assign_account(mob/user)
+	// A forged cover must not carry the operator's real bank account, or the
+	// real name would leak through the linked account on examination.
+	clear_account()
+
+/// TRUE when this card is currently presenting its cover (fake Nanotrasen)
+/// identity rather than the real (hidden) Syndicate identity.
+/obj/item/card/id/advanced/chameleon/infiltrator/proc/is_cover_identity()
+	return current_disguise_trim != null
+
+/obj/item/card/id/advanced/chameleon/infiltrator/attack_self(mob/user)
+	if(isliving(user) && (is_syndicate(user) || anyone))
+		return ..()
+	// Non-agents just flash (show) the cover identity instead of the agent menu.
+	if(Adjacent(user))
+		var/minor
+		if(registered_name && registered_age && registered_age < AGE_MINOR)
+			minor = " <b>[registered_age]</b>"
+		user.visible_message(span_notice("[user] shows you: [icon2html(src, viewers(user))] [src.name][minor]."), span_notice("You show \the [src.name][minor]."))
+
+/// Swap the card between its cover identity and its real (hidden) identity.
+/obj/item/card/id/advanced/chameleon/infiltrator/proc/toggle_identity(mob/user)
+	var/list/current = snapshot_identity()
+	if(length(hidden_identity))
+		var/list/restored = hidden_identity
+		restore_identity(restored)
+		hidden_identity = current
+		balloon_alert(user, restored["trim"] ? "swapped to your cover identity" : "swapped to your real identity")
+	else
+		hidden_identity = current
+		balloon_alert(user, "identity saved — set a cover, then alt-click to swap back")
+
+/obj/item/card/id/advanced/chameleon/infiltrator/proc/snapshot_identity()
+	return list(
+		"name" = registered_name,
+		"age" = registered_age,
+		"assignment" = assignment,
+		"base_trim" = ispath(trim) ? trim : trim?.type,
+		"trim" = current_disguise_trim,
+		"access" = access.Copy(),
+		"hidden_access" = hidden_access.Copy(),
+		"account" = registered_account,
+	)
+
+/obj/item/card/id/advanced/chameleon/infiltrator/proc/restore_identity(list/identity)
+	// Restore the base trim (the real trim datum) first, so sechud, icon and
+	// access classification all reflect the correct identity.
+	var/base_trim_path = identity["base_trim"]
+	trim = base_trim_path ? SSid_access.trim_singletons_by_path[base_trim_path] : null
+
+	registered_name = identity["name"]
+	registered_age = identity["age"]
+
+	// Restore the cover trim override (the visual layer).
+	current_disguise_trim = identity["trim"]
+	if(current_disguise_trim)
+		SSid_access.apply_trim_override(src, current_disguise_trim, FALSE)
+	else
+		SSid_access.remove_trim_override(src)
+
+	// Overwrite display and access with the snapshot. (apply_trim_override may
+	// have set assignment to the override trim's value, so set it after.)
+	assignment = identity["assignment"]
+	access = identity["access"].Copy()
+	hidden_access = identity["hidden_access"].Copy()
+
+	// Restore the linked bank account, if it changed.
+	var/datum/bank_account/restored_account = identity["account"]
+	if(restored_account != registered_account)
+		if(restored_account)
+			set_account(restored_account)
+		else
+			clear_account()
+
+	update_label()
+	update_appearance(UPDATE_ICON)
+
+/// Marks the card's current access as always-active hidden access. Called on
+/// spawn for infiltration operatives so the syndicate access survives retrims.
+/// The real identity snapshot is captured lazily on the first forge, when the
+/// card's registered name and account are guaranteed to be populated.
+/obj/item/card/id/advanced/chameleon/infiltrator/proc/prime_real_identity()
+	hidden_access |= access
+
+/// Primes the given human's equipped ID if it is an infiltrator agent card, so
+/// their syndicate access is retained as hidden access and their real identity
+/// can be restored via AltClick.
+/proc/prime_infiltrator_id(mob/living/carbon/human/human)
+	var/obj/item/card/id/id_card = human.get_idcard()
+	if(istype(id_card, /obj/item/card/id/advanced/chameleon/infiltrator))
+		var/obj/item/card/id/advanced/chameleon/infiltrator/infiltrator_id = id_card
+		infiltrator_id.prime_real_identity()
+
+/// Enables the suit sensor on a human's worn uniform so they appear on the
+/// faction crew monitors. Offstation syndicate uniforms ship with sensors
+/// disabled, so this is applied on spawn.
+/proc/enable_suit_sensor(mob/living/carbon/human/human)
+	var/obj/item/clothing/under/uniform = human.get_item_by_slot(ITEM_SLOT_ICLOTHING)
+	if(istype(uniform) && uniform.has_sensor <= NO_SENSORS)
+		uniform.set_has_sensor(HAS_SENSORS)
 
 /obj/item/card/id/advanced/chameleon/black
 	icon_state = "card_black"

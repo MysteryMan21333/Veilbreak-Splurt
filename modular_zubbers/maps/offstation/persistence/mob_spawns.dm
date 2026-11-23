@@ -73,6 +73,7 @@
 	if(new_spawn.client) //It should have a client, right?
 		new_spawn.add_faction(ROLE_SYNDICATE)
 		new_spawn.add_faction(ROLE_PERSISTENCE) //This is the one to select the cyborg model.
+		new_spawn.mind?.give_syndicate_codename("persistence")
 		new_spawn.radio.keyslot = new /obj/item/encryptionkey/headset_syndicate/cybersun(src)
 		new_spawn.radio.recalculateChannels()
 		new_spawn.UnlinkSelf() //This should prevent AI linking and consoles to see or lock them down.
@@ -206,7 +207,7 @@
 		/obj/item/crowbar = 1,
 		/obj/item/choice_beacon/syndicateoffstation = 1,
 		)
-	id = /obj/item/card/id/advanced/black
+	id = /obj/item/card/id/advanced/chameleon/infiltrator
 	implants = list(/obj/item/implant/weapons_auth)
 	id_trim = /datum/id_trim/syndicom/bubberstation/dauntless
 
@@ -278,6 +279,7 @@
 /datum/outfit/persistence/syndicate/brigoff
 	name = "Persistence Brig Officer"
 	uniform = /obj/item/clothing/under/syndicate/combat
+	id = /obj/item/card/id/advanced/black
 	id_trim = /datum/id_trim/syndicom/bubberstation/persistence/brigofficer
 	gloves = /obj/item/clothing/gloves/tackler/combat/insulated
 	suit = /obj/item/clothing/suit/armor/bulletproof/old
@@ -328,6 +330,9 @@
 //gives syndicate role so turrets don't shoot operative
 /datum/outfit/persistence/syndicate/post_equip(mob/living/carbon/human/syndicate)
 	syndicate.add_faction(ROLE_SYNDICATE)
+	syndicate.mind?.give_syndicate_codename("persistence")
+	prime_infiltrator_id(syndicate)
+	enable_suit_sensor(syndicate)
 	return ..()
 
 // Dauntless Command
@@ -394,6 +399,8 @@
 //gives syndicate role so turrets don't shoot operatives
 /datum/outfit/persistence/command/post_equip(mob/living/carbon/human/syndicate)
 	syndicate.add_faction(ROLE_SYNDICATE)
+	syndicate.mind?.give_syndicate_codename("persistence")
+	enable_suit_sensor(syndicate)
 	return ..()
 
 //Give cyborg a specific chameleon item that do not disrupt, still lose power though.
