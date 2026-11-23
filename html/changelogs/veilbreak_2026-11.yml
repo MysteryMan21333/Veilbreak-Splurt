@@ -9,6 +9,7 @@
   - rscadd: 'Added a new haircut style from citadel: "Mia".'
 2026-11-19:
   MysteryMan21333:
+<<<<<<< HEAD
   - bugfix: Crew monitoring consoles beep on death across all z-levels (suit sensors are now multi-z).
   - rscadd: Crew monitors now enforce faction isolation; Nanotrasen, Syndicate, Tarkon and Admin terminals only show their own faction.
   - rscadd: Syndicate operatives show on syndicate monitors under assigned codenames instead of their real names.
@@ -16,3 +17,21 @@
   - rscadd: HoP retrimming an off-station ID now keeps the original faction access as hidden access, so faction turrets and doors still recognize the owner.
   - rscadd: Syndicate infiltrator agent cards can hold a low-ranking cover identity alongside the real one; alt-click swaps between them (syndicate-only).
   - rscadd: Added a syndicate access management program for editing hidden faction access on ID cards.
+=======
+  - rscadd: Added the Jabroni Outfit to the loadout menu.
+  - rscadd: Added a mute button to the Colony Ore Silo.
+  - bugfix: Fixed a error that was constantly popping up whenever trying to boot in,
+      weapon_redemption.dm.
+  - qol: Allows players to spawn with a bottle of pills to help with anxiety.
+  - qol: Radios/Comms, no longer mess with the quirk.
+  - qol: If you have Well-Trained and Social Anxiety on one character, their now effected
+      with whispering.
+  - balance: Rebalances the Social Anxiety perk to no longer be a problem in larger
+      crowds.
+  - bugfix: Fixs the issue requested by discord where players had to hide in a locker
+      to calm down.
+  - qol: Craftable toilets can now be fished in, they also start with water when crafted.
+  - rscadd: Added a new research branch for the Tattoo Kit to be researched and printed
+      via service protolathe.
+  - qol: Tattoo kit is now able to be bought in the LustWish.
+>>>>>>> 81898a593306c242aed6d135e4748227ba402e6f
