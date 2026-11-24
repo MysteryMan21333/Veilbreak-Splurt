@@ -9816,16 +9816,16 @@
 	pixel_x = 7;
 	pixel_y = -5
 	},
+/obj/effect/turf_decal/trimline/dark_blue/mid_joiner{
+	dir = 1;
+	pixel_y = 6
+	},
 /obj/item/shell/server{
 	name = "veilbreak server";
 	desc = "Ye' ol' reliable server. 0 days without incidents!";
 	anchored = 1;
 	pixel_x = -8;
 	pixel_y = 1
-	},
-/obj/effect/turf_decal/trimline/dark_blue/mid_joiner{
-	dir = 1;
-	pixel_y = 6
 	},
 /obj/effect/turf_decal/trimline/dark_blue/mid_joiner{
 	pixel_y = -5
@@ -25086,6 +25086,14 @@
 /obj/effect/turf_decal/trimline/dark_blue/mid_joiner{
 	pixel_y = -5
 	},
+/obj/item/shell/server{
+	name = "veilbreak server";
+	desc = "Ye' ol' reliable server. 0 days without incidents!";
+	anchored = 1;
+	pixel_x = -11;
+	pixel_y = 1;
+	icon_state = "setup_stationary"
+	},
 /obj/item/shell/bot{
 	name = "veilbreak server";
 	desc = "Ye' ol' reliable server. 0 days without incidents!";
@@ -25101,14 +25109,6 @@
 	pixel_x = 7;
 	pixel_y = 6;
 	icon_state = "setup_medium_box"
-	},
-/obj/item/shell/server{
-	name = "veilbreak server";
-	desc = "Ye' ol' reliable server. 0 days without incidents!";
-	anchored = 1;
-	pixel_x = -11;
-	pixel_y = 1;
-	icon_state = "setup_stationary"
 	},
 /turf/open/floor/iron/dark/smooth_large,
 /area/station/tcommsat/server)
@@ -32544,6 +32544,10 @@
 	pixel_x = 7;
 	pixel_y = -5
 	},
+/obj/effect/turf_decal/trimline/dark_blue/mid_joiner{
+	dir = 1;
+	pixel_y = 6
+	},
 /obj/item/shell/server{
 	name = "guidance's personal gooning server";
 	desc = "If you touch this, you're dead.";
@@ -32552,16 +32556,12 @@
 	pixel_y = 1
 	},
 /obj/effect/turf_decal/trimline/dark_blue/mid_joiner{
-	dir = 1;
-	pixel_y = 6
+	pixel_y = -5
 	},
 /obj/item/disk/holodisk{
 	pixel_x = -8;
 	pixel_y = 14;
 	name = "40 terabytes of erp logs"
-	},
-/obj/effect/turf_decal/trimline/dark_blue/mid_joiner{
-	pixel_y = -5
 	},
 /turf/open/floor/iron/dark/smooth_large,
 /area/station/tcommsat/server)
