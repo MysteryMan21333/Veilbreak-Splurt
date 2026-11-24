@@ -15,6 +15,13 @@ Format:
 	webmap_url (link to the a webmap to see the map in the user's browser)
 endmap
 
+# Veilbreak maps.
+
+map Veilbreak
+	votable
+	default
+endmap
+
 # Production-level maps.
 
 map deltastation

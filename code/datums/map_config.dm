@@ -23,6 +23,7 @@
 	var/map_name = "MetaStation"
 	var/map_path = "map_files/MetaStation"
 	var/map_file = "MetaStation.dmm"
+	var/map_origin = "upstream" // VEILBREAK EDIT ADDITION
 
 	var/traits = null
 	var/space_ruin_levels = DEFAULT_SPACE_RUIN_LEVELS
@@ -152,6 +153,9 @@
 	map_name = json["map_name"]
 	CHECK_EXISTS("map_path")
 	map_path = json["map_path"]
+
+	if(json["map_origin"]) // VEILBREAK EDIT ADDITION
+		map_origin = json["map_origin"]
 
 	map_file = json["map_file"]
 	// "map_file": "MetaStation.dmm"

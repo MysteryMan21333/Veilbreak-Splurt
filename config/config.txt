@@ -388,6 +388,10 @@ MAPROTATION
 ## When it's set to zero, the map will be randomly picked each round
 PREFERENCE_MAP_VOTING 1
 
+## Veilbreak map mode
+## STANDARD restricts map rotation/voting to Veilbreak maps only. BROAD allows all maps.
+VEILBREAK_MAP_MODE STANDARD
+
 ## AUTOADMIN
 ## The default admin rank
 AUTOADMIN_RANK Game Master
