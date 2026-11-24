@@ -1,5 +1,0 @@
-author: "MysteryMan21333"
-delete-after: True
-changes:
-  - rscadd: "Added a STANDARD/BROAD map-mode toggle with per-mode vote statistics, an admin statistics panel (CSV/JSON export), and a player-facing map-mode verb."
-  - bugfix: "The Veilbreak station map and its shuttles are now compiled and loadable."
