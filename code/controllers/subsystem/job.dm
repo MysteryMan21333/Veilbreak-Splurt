@@ -255,6 +255,7 @@ SUBSYSTEM_DEF(job)
 	player.mind.set_assigned_role(job)
 	unassigned -= player
 	job.current_positions++
+	record_fair_single_slot_assignment(player, job)
 	return TRUE
 
 /datum/controller/subsystem/job/proc/find_occupation_candidates(datum/job/job, level = 0)
@@ -270,7 +271,7 @@ SUBSYSTEM_DEF(job)
 			continue
 
 		// Initial screening check. Does the player even have the job enabled, if they do - Is it at the correct priority level?
-		var/player_job_level = player.client?.prefs.job_preferences[job.title]
+		var/player_job_level = get_effective_job_priority(player, job)
 		if(isnull(player_job_level))
 			job_debug("FOC: Player job not enabled, Player: [player]")
 			continue
@@ -505,7 +506,7 @@ SUBSYSTEM_DEF(job)
 			var/list/possible_jobs = list()
 			for(var/datum/job/job in available_occupations)
 				// Filter any job that doesn't fit the current level.
-				var/player_job_level = player.client?.prefs.job_preferences[job.title]
+				var/player_job_level = get_effective_job_priority(player, job)
 				if(isnull(player_job_level))
 					job_debug("JOBS: Job not enabled, Job: [job]")
 					continue
