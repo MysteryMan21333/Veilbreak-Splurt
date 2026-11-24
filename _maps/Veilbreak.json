@@ -1,7 +1,8 @@
 {
     "version": 1,
     "map_name": "Veilbreak",
-    "map_path": "veilbreak",
+    "map_path": "map_files/veilbreak",
+    "map_origin": "veilbreak",
     "map_file": "ssfrontier.dmm",
     "shuttles": {
         "emergency": "emergency_box",
