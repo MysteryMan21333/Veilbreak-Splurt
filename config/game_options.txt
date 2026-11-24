@@ -178,6 +178,13 @@ ALLOW_AI
 ## Allow the AI Multicamera feature to be used by AI players
 ALLOW_AI_MULTICAM
 
+## Fair Single Slot Roles ###
+
+## Fair single-slot roles: when enabled, the previous round holder of a single-slot role (Heads/AI/etc.) has that role deprioritized one tier next round so others get first pick.
+FAIR_SINGLE_SLOT
+FAIR_SINGLE_SLOT_MIN_POP 8
+FAIR_SINGLE_SLOT_MAX_POP 12
+
 ## Secborg ###
 ## Uncomment to prevent the security cyborg model from being chosen
 DISABLE_SECBORG
