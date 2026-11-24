@@ -1,4 +1,5 @@
 // Ported drink containers from S.P.L.U.R.T-Station-13
+/*
 /obj/item/reagent_containers/cup/soda_cans/carbonatedcum
 	name = "Mosley's Special Carbonated Cum"
 	desc = "A pink can with the image of a Mal0 on the front. Very seductive eyes."
@@ -12,7 +13,7 @@
 	icon = 'modular_zzplurt/icons/obj/drinks/drinks.dmi'
 	icon_state = "carbonatedfemcum"
 	list_reagents = list(/datum/reagent/consumable/femcum = 30)
-
+*/
 /obj/item/reagent_containers/cup/soda_cans/blood
 	name = "Stoker's Reserve"
 	desc = "A cola bottle made to look like a night out on the town, bears a large V."
