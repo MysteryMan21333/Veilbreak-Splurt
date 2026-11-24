@@ -122,7 +122,7 @@ Stabilized extracts:
 
 /obj/item/slimecross/stabilized/gold
 	colour = SLIME_TYPE_GOLD
-	effect_desc = "Creates a pet when held."
+	effect_desc = "Creates a pet when held, offered to ghosts to play as your familiar."
 	var/mob_type
 	var/datum/mind/saved_mind
 	var/mob_name = "Familiar"
