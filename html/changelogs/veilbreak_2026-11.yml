@@ -41,3 +41,6 @@
   MysteryMan21333:
   - bugfix: The stabilized gold extract's familiar now offers itself to ghosts so
       a player can become your familiar.
+2026-11-26:
+  Vhariik:
+  - qol: removed flaps from genetics
