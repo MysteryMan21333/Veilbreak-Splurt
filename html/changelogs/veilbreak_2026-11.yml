@@ -37,3 +37,6 @@
   - rscadd: Added a STANDARD/BROAD map-mode toggle with per-mode vote statistics,
       an admin statistics panel (CSV/JSON export), and a player-facing map-mode verb.
   - bugfix: The Veilbreak station map and its shuttles are now compiled and loadable.
+2026-11-27:
+  MysteryMan21333:
+  - rscadd: "Chem, soda, and booze dispensers can now be hacked via their wiring to dispense the secret reagents normally locked behind an emag."
