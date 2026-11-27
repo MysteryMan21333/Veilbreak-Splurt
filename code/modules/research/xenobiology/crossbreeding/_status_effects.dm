@@ -1056,7 +1056,10 @@
 /datum/status_effect/stabilized/gold
 	id = "stabilizedgold"
 	colour = SLIME_TYPE_GOLD
-	var/mob/living/simple_animal/familiar
+	/// The pet spawned for the extract holder. Can be a simple animal or a basic mob.
+	var/mob/living/familiar
+	/// Whether a ghost poll is currently being offered for the familiar.
+	var/being_offered = FALSE
 
 /datum/status_effect/stabilized/gold/tick(seconds_between_ticks)
 	var/obj/item/slimecross/stabilized/gold/linked = linked_extract
@@ -1064,7 +1067,8 @@
 		familiar = new linked.mob_type(get_turf(owner.loc))
 		familiar.name = linked.mob_name
 		if(isanimal(familiar))
-			familiar.del_on_death = TRUE
+			var/mob/living/simple_animal/simple_familiar = familiar
+			simple_familiar.del_on_death = TRUE
 		else //we are a basicmob otherwise
 			var/mob/living/basic/basic_familiar = familiar
 			basic_familiar.basic_mob_flags |= DEL_ON_DEATH
@@ -1073,13 +1077,57 @@
 		if(linked.saved_mind)
 			linked.saved_mind.transfer_to(familiar)
 			familiar.ckey = linked.saved_mind.key
+		else
+			INVOKE_ASYNC(src, PROC_REF(offer_familiar_sentience))
 	else
 		if(familiar.mind)
 			linked.saved_mind = familiar.mind
 	return ..()
 
+/// Offers the freshly created familiar to ghosts so one can play as the owner's familiar.
+/datum/status_effect/stabilized/gold/proc/offer_familiar_sentience()
+	var/obj/item/slimecross/stabilized/gold/linked = linked_extract
+	var/mob/living/our_familiar = familiar
+	if(being_offered || QDELETED(our_familiar) || our_familiar.ckey || linked.saved_mind)
+		return
+	being_offered = TRUE
+	if(!QDELETED(owner))
+		owner.balloon_alert(owner, "offering familiar...")
+
+	var/mob/chosen_ghost = SSpolling.poll_ghosts_for_target(
+		question = "[span_danger(owner.real_name)]'s familiar, [span_notice(our_familiar.name)], is looking for a soul to inhabit it!",
+		check_jobban = ROLE_SENTIENCE,
+		poll_time = 20 SECONDS,
+		checked_target = our_familiar,
+		ignore_category = POLL_IGNORE_SENTIENCE_POTION,
+		alert_pic = our_familiar,
+		role_name_text = "familiar",
+		chat_text_border_icon = linked,
+	)
+
+	if(isnull(chosen_ghost) || QDELETED(our_familiar) || our_familiar.ckey || QDELETED(owner))
+		being_offered = FALSE
+		if(!QDELETED(owner))
+			owner.balloon_alert(owner, "no takers")
+		return
+
+	our_familiar.PossessByPlayer(chosen_ghost.key)
+	our_familiar.mind.enslave_mind_to_creator(owner)
+	SEND_SIGNAL(our_familiar, COMSIG_SIMPLEMOB_SENTIENCEPOTION, owner)
+	if(isanimal(our_familiar))
+		var/mob/living/simple_animal/smart_familiar = our_familiar
+		smart_familiar.sentience_act()
+	our_familiar.mind.add_antag_datum(/datum/antagonist/sentient_creature)
+	our_familiar.log_message("was offered to and inhabited by [key_name(chosen_ghost)] as [owner.real_name]'s familiar.", LOG_GAME)
+	owner.log_message("had their familiar [our_familiar.name] inhabited by [key_name(chosen_ghost)].", LOG_GAME)
+	linked.saved_mind = our_familiar.mind
+	being_offered = FALSE
+	if(!QDELETED(owner))
+		owner.balloon_alert(owner, "familiar taken!")
+
 /datum/status_effect/stabilized/gold/on_remove()
 	if(familiar)
+		to_chat(familiar, span_notice("Your familiar body fades away as the slime core loses its bond."))
 		qdel(familiar)
 
 /datum/status_effect/stabilized/adamantine/on_apply()
