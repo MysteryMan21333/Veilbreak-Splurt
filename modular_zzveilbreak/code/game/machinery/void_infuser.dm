@@ -30,8 +30,9 @@
 	active_power_usage = max(1000, 600000 - (50000 * cap_rating))
 
 /obj/machinery/void_infuser/attackby(obj/item/W, mob/living/user, params)
-	// Let tool interactions (screwdriver, crowbar, etc.) pass through to normal machinery handling.
-	if(length(W.get_all_tool_behaviours()))
+	// Let tool interactions (screwdriver, crowbar, etc.) pass through to normal machinery handling,
+	// unless inserting an infusable tool-weapon (such as a plasma cutter) into a closed, intact infuser.
+	if(length(W.get_all_tool_behaviours()) && (!istype(W, /obj/item/gun/energy/plasmacutter) || panel_open || (machine_stat & BROKEN)))
 		return ..()
 
 	if(istype(W, /obj/item/voidshard) || W.w_class <= WEIGHT_CLASS_BULKY)
@@ -84,13 +85,20 @@
 	data["items"] = items
 	data["can_infuse"] = (has_shard && has_target)
 
-	var/list/recipes = list()
-	for(var/T in subtypesof(/datum/void_infusion_recipe))
-		var/datum/void_infusion_recipe/R = new T()
-		if(R.target_type)
-			var/obj/item/target_path = R.target_type
-			recipes += initial(target_path.name)
-	data["recipes"] = recipes
+	var/static/list/cached_recipe_names
+	if(!cached_recipe_names)
+		cached_recipe_names = list()
+		for(var/datum/void_infusion_recipe/recipe_path as anything in subtypesof(/datum/void_infusion_recipe))
+			if(!initial(recipe_path.show_in_ui))
+				continue
+			var/recipe_label = initial(recipe_path.display_name)
+			if(!recipe_label)
+				var/obj/item/target_path = initial(recipe_path.target_type)
+				if(target_path)
+					recipe_label = format_text(initial(target_path.name))
+			if(recipe_label)
+				cached_recipe_names |= recipe_label
+	data["recipes"] = cached_recipe_names
 
 	return data
 

@@ -30,8 +30,8 @@ export const VoidInfuser = (props) => {
   } = data;
 
   return (
-    <Window width={400} height={400} title="Void Infuser">
-      <Window.Content>
+    <Window width={400} height={450} title="Void Infuser">
+      <Window.Content scrollable>
         <Section title="Machine Status" textAlign="center">
           {is_infusing ? (
             <Box>
